@@ -1,22 +1,26 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 
-<head th:replace = "fragments :: pageHead(${pageTitle})">
+<head th:replace = "fragments :: pageHead('Your Account Details')">
 
 <body>
 	<div class="container-fluid">
 	<div th:replace = "Navigation :: menu"></div>
-		<div>
-			<h2>Manager Users | [[${pageTitle}]]</h2>
-		</div>
-		<form th:action="@{/users/save}" method="post" style="max-width: 700px; margin: 0 auto" enctype="multipart/form-data" th:object = "${user}" 
-		onsubmit="return checkEmailUnique(this);" id = "saveUser">
+		<form th:action="@{/account/update}" method="post" style="max-width: 700px; margin: 0 auto" 
+		enctype="multipart/form-data" th:object = "${user}">
 		<input type="hidden" th:field= "*{id}" />
+		<div>
+			<h2 class = "text-centre">Your Account Details</h2>
+		</div>
+		
+		<div th:if="${message != null}" class = "alert alert-success text-center">
+		[[${message}]]
+		</div>
 			<div class="border border-secondary rounded p-3">
 				<div class="form-group row">
 					<label class="col-sm-4 col-form-label">E-mail:</label>
 					<div class="col-sm-8">
-						<input type="email" class="form-control" th:field = "*{email}" required minlength="8" maxlength="128">
+						<input type="email" class="form-control" th:field = "*{email}" readonly  = "readonly">
 					</div>
 				</div>
 
@@ -37,11 +41,15 @@
 				<div class="form-group row">
 					<label class="col-sm-4 col-form-label">Password:</label>
 					<div class="col-sm-8">
-						<input th:if = "${user.id == null}" type="password" class="form-control" th:field = "*{password}" 
-						required minlength="5" maxlength="20">
-						
-						<input th:if = "${user.id != null}" type="password" class="form-control" th:field = "*{password}" 
-						 minlength="5" maxlength="20" placeholder="Leave Blank if you don't want to change the password'">
+						<input type="password" th:field = "*{password}" class="form-control" placeholder="Leave Blank, if you don't want to change the password "
+						minlength="8" maxlength="20" oninput="checkPasswordMatch(document.getElementById('confirmPassword'))" >
+					</div>
+				</div>
+
+				<div class="form-group row">
+					<label class="col-sm-4 col-form-label">Confirm Password:</label>
+					<div class="col-sm-8">
+						<input type="password" th:field = "*{password}" class="form-control" id="confirmPassword" minlength="8" maxlength="20 " oninput="checkPasswordMatch(this)">
 					</div>
 				</div>
 
@@ -49,25 +57,10 @@
 				<div class="form-group row">
 					<label class="col-sm-4 col-form-label">Roles:</label>
 					<div class="col-sm-8">
-						<th:block th:each="role: ${listRoles}">
-							<input type="checkbox" th:field = "*{roles}"
-							th:text = "${role.name}"
-							th:value = "${role.id}"
-							class="m-2"
-							 />
-							 <small>[[${role.description}]]</small>
-							 <br>
-						</th:block>
+						<span><b>[[${user.roles}]]</b></span>
 					</div>
 				</div>
-				
-				
-				<div class="form-group row">
-					<label class="col-sm-4 col-form-label">Enabled:</label>
-					<div class="col-sm-8">
-						<input type="checkbox" th:field = "*{enabled}" >
-					</div>
-				</div>
+
 				
 					<div class="form-group row">
 						<label class="col-sm-4 col-form-label">Photos:</label>
@@ -139,35 +132,16 @@
 		reader.readAsDataURL(file);
 	}
 
-	function checkEmailUnique(){
-		url = "[[@{/users/check_email}]]"
-		userEmail = $("#email").val();
-		csrfValue = $("input[name='_csrf']").val();
-		userId = $("#id").val();
-		params = {id:userId,email: userEmail, _csrf : csrfValue};
-		var form = document.querySelector("#saveUser");
-		$.post(url,params,function(response){
-			if(response == "OK"){
-				form.submit();
-			}
-			else if(response == "Duplicated"){
-				showModalDialog("Warning","There is a another user having the email " + userEmail);
-			}
-			else{
-				showModalDialog("Error","Unknown response server");
-			}
-				
-		}).fail(function(){
-			showModalDialog("Error","Could not Connect to server");
-		});
-		return false;	
+	function checkPasswordMatch(confirmPassword){
+		if(confirmPassword.value != $('#password').val()){
+			confirmPassword.setCustomValidity("Password Don't Match !!")
+		}
+		else{
+			confirmPassword.setCustomValidity("")
+		}
 	}
 
-	function showModalDialog(title,message){
-		$("#modalTitle").text(title);
-		$("#modalBody").text(message);
-		$("#modalDialog").modal();
-	}
+
 </script>
 
 </body>
